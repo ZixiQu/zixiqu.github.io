@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zixiqu.com</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .form-row {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Expense Splitter</h2>
+        <form id="expenseForm">
+            <div class="form-group">
+                <label for="numUsers">Number of Users:</label>
+                <input type="number" class="form-control" id="numUsers" required>
+            </div>
+            
+            <button type="button" class="btn btn-primary" onclick="addRow()">Add Row</button>
+            <div id="rowsContainer"></div>
+            <button type="submit" class="btn btn-success">Calculate</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('expenseForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            calculateExpenses();
+        });
+
+        function addRow() {
+            const container = document.getElementById('rowsContainer');
+            const rowId = `row${container.children.length}`;
+            const html = `
+                <div class="form-row" id="${rowId}">
+                    <div class="col">
+                        <input type="any" step=".01" class="form-control" placeholder="Price" required>
+                    </div>
+                    <div class="col">
+                        <input type="text" class="form-control" placeholder="Ratio (x/y/z)" required>
+                    </div>
+                    <div class="col">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="taxSwitch${container.children.length}">
+                            <label class="custom-control-label" for="taxSwitch${container.children.length}">Include Tax</label>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <button type="button" class="btn btn-danger" onclick="deleteRow('${rowId}')">Delete</button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function deleteRow(rowId) {
+            const row = document.getElementById(rowId);
+            row.parentNode.removeChild(row);
+        }
+
+        function calculateExpenses() {
+            let totalAmounts = [];
+            const numUsers = parseInt(document.getElementById('numUsers').value);
+            const rows = document.getElementById('rowsContainer').children;
+
+            for (let i = 0; i < rows.length; i++) {
+                let price = parseFloat(rows[i].querySelectorAll('input')[0].value);
+                let ratio = rows[i].querySelectorAll('input')[1].value.split('/');
+                let includeTax = rows[i].querySelectorAll('input')[2].checked;
+
+                if (includeTax) price *= 1.13;
+
+                for (let j = 0; j < numUsers; j++) {
+                    totalAmounts[j] = (totalAmounts[j] || 0) + (price * (ratio[j] / ratio.reduce((a, b) => parseFloat(a) + parseFloat(b), 0)));
+                }
+            }
+
+            document.getElementById('result').innerHTML = 'Total amount per user: ' + totalAmounts.map(amount => '$' + amount.toFixed(2)).join(', ');
+        }
+    </script>
+</body>
+</html>
